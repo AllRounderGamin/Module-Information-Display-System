@@ -1,0 +1,11 @@
+{
+  "name": "interactivenode",
+  "version": "1.0.0",
+  "description": "Interactive Node Element",
+  "main": "index.js",
+  "scripts": {
+    "run": "http-server ./App"
+  },
+  "author": "Benjamin Richards",
+  "license": "ISC"
+}
