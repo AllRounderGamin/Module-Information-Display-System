@@ -11,6 +11,12 @@
     position: absolute;
     left: var(--Xpos);
     top: var(--Ypos);
+    z-index: 1;
+}
+
+interactive-node.dragging{
+    position: absolute;
+    z-index: 0;
 }
 
 .nodeName{
