@@ -6,7 +6,7 @@ function setUp(){
     basicNode.shadowRoot.querySelector(".nodeName").textContent = "Default Node";
     basicNode.setAttribute("id", "0");
     document.querySelector("body").appendChild(basicNode);
-
+    eventSetup(basicNode);
     localStorage.setItem("next-node-id", "1");
 }
 
@@ -17,10 +17,42 @@ function addNode(e){
     newNode.setAttribute("id", localStorage.getItem("next-node-id"));
     localStorage.setItem("next-node-id", (parseInt(localStorage.getItem("next-node-id")) + 1).toString());
     document.querySelector("body").appendChild(newNode);
+    eventSetup(newNode);
     const input = newNode.shadowRoot.querySelector(".nodeName")
     input.focus();
 }
 
+function eventSetup(node){
+    node.addEventListener("dragstart", dragStartHandler);
+    node.addEventListener("dragover", dragHandler);
+    node.addEventListener("drop", dropHandler);
+    node.addEventListener("dragend", dragEndHandler);
+}
+
+function dragStartHandler(e){
+    DRAG_TARGET = e.target;
+    e.dataTransfer.setDragImage(new Image, 0, 0);
+    e.target.classList.add("dragging");
+}
+
+function dragHandler(e){
+    e.preventDefault();
+    DRAG_TARGET.style.setProperty("--Xpos", e.pageX - 50 + "px");
+    DRAG_TARGET.style.setProperty("--Ypos", e.pageY - 50 + "px");
+}
+
+function dropHandler(e){
+    e.preventDefault();
+    if (DRAG_TARGET.id !== e.target.id){
+        CONNECTED_NODES.push([DRAG_TARGET.id, e.target.id])
+    }
+    console.log(CONNECTED_NODES)
+}
+
+function dragEndHandler(e){
+    e.target.classList.remove("dragging");
+}
+
 window.addEventListener("load", setUp)
 const CONNECTED_NODES = [];
-export {CONNECTED_NODES};
+let DRAG_TARGET = undefined;
