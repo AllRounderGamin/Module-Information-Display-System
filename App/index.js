@@ -32,6 +32,7 @@ function eventSetup(node){
 function dragStartHandler(e){
     DRAG_TARGET = e.target;
     e.dataTransfer.setDragImage(new Image, 0, 0);
+    e.dataTransfer.setData("text/plain", e.target.id);
     e.target.classList.add("dragging");
 }
 
@@ -51,6 +52,10 @@ function dropHandler(e){
 
 function dragEndHandler(e){
     e.target.classList.remove("dragging");
+    const nodeTarget = document.getElementById(e.dataTransfer.getData("text"));
+    //console.log(document.querySelector(`#${e.dataTransfer.getData("text")}`));
+    document.querySelector("body").removeChild(nodeTarget);
+    document.querySelector("body").appendChild(nodeTarget);
 }
 
 window.addEventListener("load", setUp)
