@@ -1,5 +1,5 @@
 {
-  "name": "interactivenode",
+  "name": "moduletimeline",
   "version": "1.0.0",
   "description": "Interactive Node Element",
   "main": "index.js",
@@ -7,5 +7,16 @@
     "run": "http-server ./App"
   },
   "author": "Benjamin Richards",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.28.0",
+    "eslint-config-portsoc": "^1.0.1"
+  },
+  "eslintConfig": {
+    "extends": "portsoc",
+    "root": true,
+    "env": {
+      "browser": true
+    }
+  }
 }
