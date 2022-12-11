@@ -45,9 +45,23 @@ function dragHandler(e){
 function dropHandler(e){
     e.preventDefault();
     if (DRAG_TARGET.id !== e.target.id){
-        CONNECTED_NODES.push([DRAG_TARGET.id, e.target.id]);
+        const objIndex = objectSearch([DRAG_TARGET.id, e.target.id], CONNECTED_NODES);
+        if (objIndex === false) {
+            CONNECTED_NODES.push([DRAG_TARGET.id, e.target.id]);
+        } else {
+            CONNECTED_NODES.splice(objIndex, 1);
+        }
     }
     console.log(CONNECTED_NODES);
+}
+
+function objectSearch(obj, arr){
+    for (let object of arr){
+        if (JSON.stringify(object) === JSON.stringify(obj)){
+            return arr.indexOf(object);
+        }
+    }
+    return false;
 }
 
 function dragEndHandler(e){
@@ -60,3 +74,13 @@ function dragEndHandler(e){
 window.addEventListener("load", setUp);
 const CONNECTED_NODES = [];
 let DRAG_TARGET = undefined;
+
+
+
+
+
+/*    eventSetup(document.querySelector("#end"))
+    new LeaderLine(
+        document.querySelector("#start"),
+        document.querySelector("#end")
+    )*/
