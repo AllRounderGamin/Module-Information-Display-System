@@ -47,6 +47,10 @@ function dropHandler(e){
     if (DRAG_TARGET.id !== e.target.id){
         const objIndex = objectSearch([DRAG_TARGET.id, e.target.id], CONNECTED_NODES);
         if (objIndex === false) {
+            new LeaderLine(
+                document.querySelector(`#${DRAG_TARGET.id}`),
+                document.querySelector(`#${e.target.id}`)
+            )
             CONNECTED_NODES.push([DRAG_TARGET.id, e.target.id]);
         } else {
             CONNECTED_NODES.splice(objIndex, 1);
