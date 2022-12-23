@@ -3,6 +3,8 @@ function setUp(){
     const basicNode = document.createElement("interactive-node");
     basicNode.style.setProperty("--Xpos", (window.innerWidth / 2) - 50 +"px");
     basicNode.style.setProperty("--Ypos", (window.innerHeight / 2) - 50 + "px");
+    basicNode.dataset.x = ((window.innerWidth / 2) - 50).toString();
+    basicNode.dataset.y = ((window.innerHeight / 2) - 50).toString();
     basicNode.shadowRoot.querySelector(".nodeName").textContent = "Default Node";
     basicNode.setAttribute("id", "Node0");
     document.querySelector("body").appendChild(basicNode);
@@ -14,6 +16,8 @@ function addNode(e){
     const newNode = document.createElement("interactive-node");
     newNode.style.setProperty("--Xpos", e.clientX + "px");
     newNode.style.setProperty("--Ypos", e.clientY + "px");
+    newNode.dataset.x = (e.clientX).toString();
+    newNode.dataset.y = (e.clientY).toString();
     newNode.setAttribute("id", "Node" + localStorage.getItem("next-node-id"));
     localStorage.setItem("next-node-id", (parseInt(localStorage.getItem("next-node-id")) + 1).toString());
     document.querySelector("body").appendChild(newNode);
@@ -40,6 +44,8 @@ function dragHandler(e){
     e.preventDefault();
     DRAG_TARGET.style.setProperty("--Xpos", e.pageX - 50 + "px");
     DRAG_TARGET.style.setProperty("--Ypos", e.pageY - 50 + "px");
+    DRAG_TARGET.dataset.x = (e.pageX - 50).toString();
+    DRAG_TARGET.dataset.y = (e.pageY - 50).toString();
 }
 
 function dropHandler(e){
@@ -48,8 +54,8 @@ function dropHandler(e){
         const objIndex = objectSearch([DRAG_TARGET.id, e.target.id], CONNECTED_NODES);
         if (objIndex === false) {
             new LeaderLine(
-                document.querySelector(`#${DRAG_TARGET.id}`),
-                document.querySelector(`#${e.target.id}`)
+                LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)}),
+                LeaderLine.pointAnchor(document.body, {x: parseInt(e.target.dataset.x), y: parseInt(e.target.dataset.y)})
             )
             CONNECTED_NODES.push([DRAG_TARGET.id, e.target.id]);
         } else {
@@ -83,8 +89,7 @@ let DRAG_TARGET = undefined;
 
 
 
-/*    eventSetup(document.querySelector("#end"))
-    new LeaderLine(
-        document.querySelector("#start"),
-        document.querySelector("#end")
-    )*/
+/*
+    Find way to change CSS to use attr() and remove the css prop entirely
+    Find how to not have overflow, without needing to use overflow:hidden
+  */
