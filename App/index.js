@@ -50,6 +50,7 @@ function dragHandler(e) {
 
 function dropHandler(e) {
     e.preventDefault();
+    const lineName = DRAG_TARGET.id + e.target.id;
     if (DRAG_TARGET.id !== e.target.id) {
         let found = false;
         if (CONNECTED_NODES[DRAG_TARGET.id]){
@@ -67,18 +68,20 @@ function dropHandler(e) {
                 LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)}),
                 LeaderLine.pointAnchor(document.body, {x: parseInt(e.target.dataset.x), y: parseInt(e.target.dataset.y)})
             );
-            CONNECTED_NODES[DRAG_TARGET.id].start.push({line: line, key: DRAG_TARGET.id + e.target.id});
-            CONNECTED_NODES[DRAG_TARGET.id].keys.push(DRAG_TARGET.id + e.target.id);
-            CONNECTED_NODES[e.target.id].end.push({line: line, key: DRAG_TARGET.id + e.target.id});
-            CONNECTED_NODES[e.target.id].keys.push(DRAG_TARGET.id + e.target.id);
+            CONNECTED_NODES[DRAG_TARGET.id].start.push({line: line, key: lineName});
+            CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
+            CONNECTED_NODES[e.target.id].end.push({line: line, key: lineName});
+            CONNECTED_NODES[e.target.id].keys.push(lineName);
         } else {
             let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].start, DRAG_TARGET.id + e.target.id);
             CONNECTED_NODES[DRAG_TARGET.id].start[objIndex].line.remove();
             CONNECTED_NODES[DRAG_TARGET.id].start.splice(objIndex, 1);
+            CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName));
 
             objIndex = keySearch(CONNECTED_NODES[e.target.id].end, DRAG_TARGET.id + e.target.id);
             CONNECTED_NODES[e.target.id].end[objIndex].line.remove();
             CONNECTED_NODES[e.target.id].end.splice(objIndex, 1);
+            CONNECTED_NODES[e.target.id].keys.splice(CONNECTED_NODES[e.target.id].keys.indexOf(lineName));
         }
         console.log(CONNECTED_NODES);
     }
