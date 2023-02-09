@@ -46,6 +46,15 @@ function dragHandler(e) {
     DRAG_TARGET.style.setProperty("--Ypos", e.pageY - 50 + "px");
     DRAG_TARGET.dataset.x = (e.pageX - 50).toString();
     DRAG_TARGET.dataset.y = (e.pageY - 50).toString();
+
+    if (CONNECTED_NODES[DRAG_TARGET.id]){
+        for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].start){
+            lineObj.line.start = LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)})
+        }
+        for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].end){
+            lineObj.line.end = LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)})
+        }
+    }
 }
 
 function dropHandler(e) {
@@ -64,9 +73,12 @@ function dropHandler(e) {
             CONNECTED_NODES[e.target.id] = {start: [], end: [], keys: []}
         }
         if (found === false) {
+            // Maybe line doesnt go to element cause its not a div? Try getting node id and then the class in the shadow
             const line = new LeaderLine(
                 LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)}),
-                LeaderLine.pointAnchor(document.body, {x: parseInt(e.target.dataset.x), y: parseInt(e.target.dataset.y)}));
+                LeaderLine.pointAnchor(document.body, {x: parseInt(e.target.dataset.x), y: parseInt(e.target.dataset.y)}),
+                {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', opacity: 1}
+            );
             CONNECTED_NODES[DRAG_TARGET.id].start.push({line: line, key: lineName});
             CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
             CONNECTED_NODES[e.target.id].end.push({line: line, key: lineName});

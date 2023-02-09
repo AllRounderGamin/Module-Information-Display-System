@@ -37,4 +37,5 @@ interactive-node.dragging{
 .leader-line{
     position: absolute;
     z-index: 0;
+    background-color: rgba(0,0,0,0);
 }
