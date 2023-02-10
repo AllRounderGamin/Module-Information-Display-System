@@ -1,29 +1,34 @@
 function setUp() {
     document.addEventListener("dblclick", addNode);
-    const basicNode = document.createElement("interactive-node");
-    basicNode.style.setProperty("--Xpos", (window.innerWidth / 2) - 50 + "px");
-    basicNode.style.setProperty("--Ypos", (window.innerHeight / 2) - 50 + "px");
-    basicNode.dataset.x = ((window.innerWidth / 2) - 50).toString();
-    basicNode.dataset.y = ((window.innerHeight / 2) - 50).toString();
-    basicNode.shadowRoot.querySelector(".nodeName").textContent = "Default Node";
-    basicNode.setAttribute("id", "Node0");
+    const basicNode = document.querySelector("#nodeTemplate").content.cloneNode(true);
+    const basicNodeDiv = basicNode.querySelector(".node");
+    const basicNodeText = basicNodeDiv.querySelector(".nodeName");
+    basicNodeDiv.style.setProperty("--Xpos", (window.innerWidth / 2) - 50 + "px");
+    basicNodeDiv.style.setProperty("--Ypos", (window.innerHeight / 2) - 50 + "px");
+    basicNodeDiv.dataset.x = ((window.innerWidth / 2) - 50).toString();
+    basicNodeDiv.dataset.y = ((window.innerHeight / 2) - 50).toString();
+    basicNodeText.textContent = "Default Node";
+    basicNodeText.setAttribute("parentId", "Node0");
+    basicNodeDiv.setAttribute("id", "Node0");
     document.querySelector("body").appendChild(basicNode);
-    eventSetup(basicNode);
+    eventSetup(basicNodeDiv);
     localStorage.setItem("next-node-id", "1");
 }
 
 function addNode(e) {
-    const newNode = document.createElement("interactive-node");
-    newNode.style.setProperty("--Xpos", e.clientX + "px");
-    newNode.style.setProperty("--Ypos", e.clientY + "px");
-    newNode.dataset.x = (e.clientX).toString();
-    newNode.dataset.y = (e.clientY).toString();
-    newNode.setAttribute("id", "Node" + localStorage.getItem("next-node-id"));
+    const newNode = document.querySelector("#nodeTemplate").content.cloneNode(true);
+    const newNodeDiv = newNode.querySelector(".node");
+    const newNodeText = newNodeDiv.querySelector(".nodeName");
+    newNodeDiv.style.setProperty("--Xpos", e.clientX + "px");
+    newNodeDiv.style.setProperty("--Ypos", e.clientY + "px");
+    newNodeDiv.dataset.x = (e.clientX).toString();
+    newNodeDiv.dataset.y = (e.clientY).toString();
+    newNodeDiv.setAttribute("id", "Node" + localStorage.getItem("next-node-id"));
+    newNodeText.setAttribute("parentId", "Node" + localStorage.getItem("next-node-id"));
     localStorage.setItem("next-node-id", (parseInt(localStorage.getItem("next-node-id")) + 1).toString());
     document.querySelector("body").appendChild(newNode);
-    eventSetup(newNode);
-    const input = newNode.shadowRoot.querySelector(".nodeName")
-    input.focus();
+    eventSetup(newNodeDiv);
+    newNodeText.focus();
 }
 
 function eventSetup(node) {
@@ -49,49 +54,54 @@ function dragHandler(e) {
 
     if (CONNECTED_NODES[DRAG_TARGET.id]){
         for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].start){
-            lineObj.line.start = LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)})
+            lineObj.line.position();
         }
         for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].end){
-            lineObj.line.end = LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)})
+            lineObj.line.position();
         }
     }
 }
 
 function dropHandler(e) {
     e.preventDefault();
-    const lineName = DRAG_TARGET.id + e.target.id;
-    if (DRAG_TARGET.id !== e.target.id) {
+    let dropTarget;
+    if (e.target.getAttribute("parentid") != null){
+        dropTarget = document.querySelector(`#${e.target.getAttribute("parentid")}`);
+    } else {
+        dropTarget = e.target;
+    }
+    const lineName = DRAG_TARGET.id + dropTarget.id;
+    if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
         let found = false;
         if (CONNECTED_NODES[DRAG_TARGET.id]){
-            found = objectSearch(DRAG_TARGET.id + e.target.id, CONNECTED_NODES[DRAG_TARGET.id].keys);
+            found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[DRAG_TARGET.id].keys);
         } else {
             CONNECTED_NODES[DRAG_TARGET.id] = {start: [], end: [], keys: []};
         }
-        if (!found && CONNECTED_NODES[e.target.id]){
-            found = objectSearch(DRAG_TARGET.id + e.target.id, CONNECTED_NODES[e.target.id].keys);
+        if (!found && CONNECTED_NODES[dropTarget.id]){
+            found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[dropTarget.id].keys);
         } else {
-            CONNECTED_NODES[e.target.id] = {start: [], end: [], keys: []}
+            CONNECTED_NODES[dropTarget.id] = {start: [], end: [], keys: []}
         }
         if (found === false) {
-            // Maybe line doesnt go to element cause its not a div? Try getting node id and then the class in the shadow
             const line = new LeaderLine(
-                LeaderLine.pointAnchor(document.body, {x: parseInt(DRAG_TARGET.dataset.x), y: parseInt(DRAG_TARGET.dataset.y)}),
-                LeaderLine.pointAnchor(document.body, {x: parseInt(e.target.dataset.x), y: parseInt(e.target.dataset.y)}),
+                DRAG_TARGET,
+                dropTarget,
                 {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', opacity: 1}
             );
             CONNECTED_NODES[DRAG_TARGET.id].start.push({line: line, key: lineName});
             CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-            CONNECTED_NODES[e.target.id].end.push({line: line, key: lineName});
-            CONNECTED_NODES[e.target.id].keys.push(lineName);
+            CONNECTED_NODES[dropTarget.id].end.push({line: line, key: lineName});
+            CONNECTED_NODES[dropTarget.id].keys.push(lineName);
         } else {
-            let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].start, DRAG_TARGET.id + e.target.id);
+            let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].start, DRAG_TARGET.id + dropTarget.id);
             CONNECTED_NODES[DRAG_TARGET.id].start[objIndex].line.remove();
             CONNECTED_NODES[DRAG_TARGET.id].start.splice(objIndex, 1);
             CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName));
 
-            objIndex = keySearch(CONNECTED_NODES[e.target.id].end, DRAG_TARGET.id + e.target.id);
-            CONNECTED_NODES[e.target.id].end.splice(objIndex, 1);
-            CONNECTED_NODES[e.target.id].keys.splice(CONNECTED_NODES[e.target.id].keys.indexOf(lineName));
+            objIndex = keySearch(CONNECTED_NODES[dropTarget.id].end, DRAG_TARGET.id + dropTarget.id);
+            CONNECTED_NODES[dropTarget.id].end.splice(objIndex, 1);
+            CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName));
         }
         console.log(CONNECTED_NODES);
     }

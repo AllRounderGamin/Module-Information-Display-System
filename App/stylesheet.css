@@ -23,7 +23,7 @@ body{
     padding-bottom: 1em;
 }
 
-interactive-node.dragging{
+.node.dragging{
     position: absolute;
     z-index: 1;
 }
