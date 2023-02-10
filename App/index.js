@@ -53,10 +53,7 @@ function dragHandler(e) {
     DRAG_TARGET.dataset.y = (e.pageY - 50).toString();
 
     if (CONNECTED_NODES[DRAG_TARGET.id]){
-        for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].start){
-            lineObj.line.position();
-        }
-        for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].end){
+        for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].lines){
             lineObj.line.position();
         }
     }
@@ -76,12 +73,12 @@ function dropHandler(e) {
         if (CONNECTED_NODES[DRAG_TARGET.id]){
             found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[DRAG_TARGET.id].keys);
         } else {
-            CONNECTED_NODES[DRAG_TARGET.id] = {start: [], end: [], keys: []};
+            CONNECTED_NODES[DRAG_TARGET.id] = {lines: [], keys: []};
         }
         if (!found && CONNECTED_NODES[dropTarget.id]){
             found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[dropTarget.id].keys);
         } else {
-            CONNECTED_NODES[dropTarget.id] = {start: [], end: [], keys: []}
+            CONNECTED_NODES[dropTarget.id] = {lines: [], keys: []}
         }
         if (found === false) {
             const line = new LeaderLine(
@@ -89,18 +86,18 @@ function dropHandler(e) {
                 dropTarget,
                 {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', opacity: 1}
             );
-            CONNECTED_NODES[DRAG_TARGET.id].start.push({line: line, key: lineName});
+            CONNECTED_NODES[DRAG_TARGET.id].lines.push({line: line, key: lineName});
             CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-            CONNECTED_NODES[dropTarget.id].end.push({line: line, key: lineName});
+            CONNECTED_NODES[dropTarget.id].lines.push({line: line, key: lineName});
             CONNECTED_NODES[dropTarget.id].keys.push(lineName);
         } else {
-            let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].start, DRAG_TARGET.id + dropTarget.id);
-            CONNECTED_NODES[DRAG_TARGET.id].start[objIndex].line.remove();
-            CONNECTED_NODES[DRAG_TARGET.id].start.splice(objIndex, 1);
+            let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, DRAG_TARGET.id + dropTarget.id);
+            CONNECTED_NODES[DRAG_TARGET.id].lines[objIndex].line.remove();
+            CONNECTED_NODES[DRAG_TARGET.id].lines.splice(objIndex, 1);
             CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName));
 
-            objIndex = keySearch(CONNECTED_NODES[dropTarget.id].end, DRAG_TARGET.id + dropTarget.id);
-            CONNECTED_NODES[dropTarget.id].end.splice(objIndex, 1);
+            objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, DRAG_TARGET.id + dropTarget.id);
+            CONNECTED_NODES[dropTarget.id].lines.splice(objIndex, 1);
             CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName));
         }
         console.log(CONNECTED_NODES);
