@@ -16,6 +16,9 @@ function setUp() {
 }
 
 function addNode(e) {
+    if (e.target !== document.body) {
+        return;
+    }
     const newNode = document.querySelector("#nodeTemplate").content.cloneNode(true);
     const newNodeDiv = newNode.querySelector(".node");
     const newNodeText = newNodeDiv.querySelector(".nodeName");
@@ -39,30 +42,42 @@ function eventSetup(node) {
 }
 
 function dragStartHandler(e) {
-    DRAG_TARGET = e.target;
     e.dataTransfer.setDragImage(new Image, 0, 0);
-    e.dataTransfer.setData("text/plain", e.target.id);
-    e.target.classList.add("dragging");
+    if (e.target.hasAttribute("id")) {
+        e.dataTransfer.setData("text/plain", e.target.getAttribute("id"));
+        DRAG_TARGET = e.target;
+        DRAG_TYPE = "node";
+        e.target.classList.add("dragging");
+    } else if (e.target.hasAttribute("parent-id")) {
+        e.dataTransfer.setData("text/plain", e.target.getAttribute("parent-id"));
+        DRAG_TYPE = "arrow";
+        TEMP_LINE = new LeaderLine(document.querySelector(`${e.target.parent - id}`), e.target);
+    }
+    console.log(e.target, DRAG_TYPE);
 }
 
 function dragHandler(e) {
     e.preventDefault();
-    DRAG_TARGET.style.setProperty("--Xpos", e.pageX - 50 + "px");
-    DRAG_TARGET.style.setProperty("--Ypos", e.pageY - 50 + "px");
-    DRAG_TARGET.dataset.x = (e.pageX - 50).toString();
-    DRAG_TARGET.dataset.y = (e.pageY - 50).toString();
-
-    if (CONNECTED_NODES[DRAG_TARGET.id]){
-        for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].lines){
-            lineObj.line.position();
+    if (DRAG_TYPE === "node") {
+        DRAG_TARGET.style.setProperty("--Xpos", e.pageX - 50 + "px");
+        DRAG_TARGET.style.setProperty("--Ypos", e.pageY - 50 + "px");
+        DRAG_TARGET.dataset.x = (e.pageX - 50).toString();
+        DRAG_TARGET.dataset.y = (e.pageY - 50).toString();
+        if (CONNECTED_NODES[DRAG_TARGET.id]) {
+            for (let lineObj of CONNECTED_NODES[DRAG_TARGET.id].lines) {
+                lineObj.line.position();
+            }
         }
+    } else if (DRAG_TYPE === "arrow") {
+        console.log("test");
+        TEMP_LINE.position();
     }
 }
 
 function dropHandler(e) {
     e.preventDefault();
     let dropTarget;
-    if (e.target.getAttribute("parentid") != null){
+    if (e.target.getAttribute("parentid") != null) {
         dropTarget = document.querySelector(`#${e.target.getAttribute("parentid")}`);
     } else {
         dropTarget = e.target;
@@ -70,12 +85,12 @@ function dropHandler(e) {
     const lineName = DRAG_TARGET.id + dropTarget.id;
     if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
         let found = false;
-        if (CONNECTED_NODES[DRAG_TARGET.id]){
+        if (CONNECTED_NODES[DRAG_TARGET.id]) {
             found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[DRAG_TARGET.id].keys);
         } else {
             CONNECTED_NODES[DRAG_TARGET.id] = {lines: [], keys: []};
         }
-        if (!found && CONNECTED_NODES[dropTarget.id]){
+        if (!found && CONNECTED_NODES[dropTarget.id]) {
             found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[dropTarget.id].keys);
         } else {
             CONNECTED_NODES[dropTarget.id] = {lines: [], keys: []}
@@ -85,7 +100,7 @@ function dropHandler(e) {
                 DRAG_TARGET,
                 dropTarget,
                 {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', opacity: 1}
-            );
+        );
             CONNECTED_NODES[DRAG_TARGET.id].lines.push({line: line, key: lineName});
             CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
             CONNECTED_NODES[dropTarget.id].lines.push({line: line, key: lineName});
@@ -113,9 +128,9 @@ function objectSearch(obj, arr) {
     return false;
 }
 
-function keySearch(arr, key){
-    for (let i = 0; i<arr.length; i++){
-        if (arr[i].key === key){
+function keySearch(arr, key) {
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i].key === key) {
             return i;
         }
     }
@@ -132,6 +147,8 @@ function dragEndHandler(e) {
 window.addEventListener("load", setUp);
 const CONNECTED_NODES = {};
 let DRAG_TARGET = undefined;
+let DRAG_TYPE = undefined;
+let TEMP_LINE = undefined;
 
 
 /*
