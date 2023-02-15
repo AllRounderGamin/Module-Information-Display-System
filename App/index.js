@@ -8,7 +8,7 @@ function setUp() {
     basicNodeDiv.dataset.x = ((window.innerWidth / 2) - 50).toString();
     basicNodeDiv.dataset.y = ((window.innerHeight / 2) - 50).toString();
     basicNodeText.textContent = "Default Node";
-    basicNodeText.setAttribute("parentId", "Node0");
+    basicNode.querySelector(".drag-dot").setAttribute("parent-id", "Node0");
     basicNodeDiv.setAttribute("id", "Node0");
     document.querySelector("body").appendChild(basicNode);
     eventSetup(basicNodeDiv);
@@ -19,6 +19,7 @@ function addNode(e) {
     if (e.target !== document.body) {
         return;
     }
+    const newID = "Node" + localStorage.getItem("next-node-id");
     const newNode = document.querySelector("#nodeTemplate").content.cloneNode(true);
     const newNodeDiv = newNode.querySelector(".node");
     const newNodeText = newNodeDiv.querySelector(".nodeName");
@@ -27,7 +28,8 @@ function addNode(e) {
     newNodeDiv.dataset.x = (e.clientX).toString();
     newNodeDiv.dataset.y = (e.clientY).toString();
     newNodeDiv.setAttribute("id", "Node" + localStorage.getItem("next-node-id"));
-    newNodeText.setAttribute("parentId", "Node" + localStorage.getItem("next-node-id"));
+    newNodeText.textContent = "Placeholder";
+    newNodeDiv.querySelector(".drag-dot").setAttribute("parent-id", newID);
     localStorage.setItem("next-node-id", (parseInt(localStorage.getItem("next-node-id")) + 1).toString());
     document.querySelector("body").appendChild(newNode);
     eventSetup(newNodeDiv);
@@ -51,9 +53,9 @@ function dragStartHandler(e) {
     } else if (e.target.hasAttribute("parent-id")) {
         e.dataTransfer.setData("text/plain", e.target.getAttribute("parent-id"));
         DRAG_TYPE = "arrow";
-        TEMP_LINE = new LeaderLine(document.querySelector(`${e.target.parent - id}`), e.target);
+        TEMP_LINE = new LeaderLine(document.querySelector(`#${e.target.getAttribute("parent-id")}`),
+            LeaderLine.pointAnchor(document, {x: e.pageX, y: e.pageY}), {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', dash: {animation:true}});
     }
-    console.log(e.target, DRAG_TYPE);
 }
 
 function dragHandler(e) {
@@ -69,13 +71,17 @@ function dragHandler(e) {
             }
         }
     } else if (DRAG_TYPE === "arrow") {
-        console.log("test");
-        TEMP_LINE.position();
+        TEMP_LINE.end = LeaderLine.pointAnchor({element: document.body, x: e.pageX, y: e.pageY});
+        console.log(e.pageX, e.pageY)
     }
 }
 
 function dropHandler(e) {
     e.preventDefault();
+    if (DRAG_TYPE === "arrow"){
+        TEMP_LINE.remove();
+        return;
+    }
     let dropTarget;
     if (e.target.getAttribute("parentid") != null) {
         dropTarget = document.querySelector(`#${e.target.getAttribute("parentid")}`);
@@ -99,7 +105,7 @@ function dropHandler(e) {
             const line = new LeaderLine(
                 DRAG_TARGET,
                 dropTarget,
-                {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', opacity: 1}
+                {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362'}
         );
             CONNECTED_NODES[DRAG_TARGET.id].lines.push({line: line, key: lineName});
             CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
@@ -139,9 +145,8 @@ function keySearch(arr, key) {
 
 function dragEndHandler(e) {
     e.target.classList.remove("dragging");
-    const nodeTarget = document.querySelector(`#${e.dataTransfer.getData("text")}`);
-    document.querySelector("body").removeChild(nodeTarget);
-    document.querySelector("body").appendChild(nodeTarget);
+    document.querySelector("body").removeChild(DRAG_TARGET);
+    document.querySelector("body").appendChild(DRAG_TARGET);
 }
 
 window.addEventListener("load", setUp);
