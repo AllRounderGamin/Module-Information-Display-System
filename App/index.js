@@ -51,10 +51,8 @@ function dragStartHandler(e) {
   DRAG_TARGET = e.target;
   e.dataTransfer.setDragImage(new Image(), 0, 0);
   if (e.target.hasAttribute('id')) {
-    e.dataTransfer.setData('text/plain', e.target.getAttribute('id'));
     DRAG_TYPE = 'node';
   } else if (e.target.hasAttribute('parent-id')) {
-    e.dataTransfer.setData('text/plain', e.target.getAttribute('parent-id'));
     DRAG_TYPE = 'arrow';
     TEMP_LINE = new LeaderLine(document.querySelector(`#${e.target.getAttribute('parent-id')}`),
       LeaderLine.pointAnchor(document, { x: e.pageX, y: e.pageY }), {
@@ -99,12 +97,12 @@ function dropHandler(e) {
   if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
     let found = false;
     if (CONNECTED_NODES[DRAG_TARGET.id]) {
-      found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[DRAG_TARGET.id].keys);
+      found = objectSearch(lineName, CONNECTED_NODES[DRAG_TARGET.id].keys);
     } else {
       CONNECTED_NODES[DRAG_TARGET.id] = { lines: [], keys: [] };
     }
     if (!found && CONNECTED_NODES[dropTarget.id]) {
-      found = objectSearch(DRAG_TARGET.id + dropTarget.id, CONNECTED_NODES[dropTarget.id].keys);
+      found = objectSearch(lineName, CONNECTED_NODES[dropTarget.id].keys);
     } else {
       CONNECTED_NODES[dropTarget.id] = { lines: [], keys: [] };
     }
@@ -119,14 +117,14 @@ function dropHandler(e) {
       CONNECTED_NODES[dropTarget.id].lines.push({ line, key: lineName });
       CONNECTED_NODES[dropTarget.id].keys.push(lineName);
     } else {
-      let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, DRAG_TARGET.id + dropTarget.id);
+      let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, lineName);
       CONNECTED_NODES[DRAG_TARGET.id].lines[objIndex].line.remove();
       CONNECTED_NODES[DRAG_TARGET.id].lines.splice(objIndex, 1);
-      CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName));
+      CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName), 1);
 
-      objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, DRAG_TARGET.id + dropTarget.id);
+      objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, lineName);
       CONNECTED_NODES[dropTarget.id].lines.splice(objIndex, 1);
-      CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName));
+      CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName), 1);
     }
     console.log(CONNECTED_NODES);
   }
