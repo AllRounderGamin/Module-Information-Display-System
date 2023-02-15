@@ -125,6 +125,7 @@ function dropHandler(e) {
       objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, lineName);
       CONNECTED_NODES[dropTarget.id].lines.splice(objIndex, 1);
       CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName), 1);
+
     }
     console.log(CONNECTED_NODES);
   }
