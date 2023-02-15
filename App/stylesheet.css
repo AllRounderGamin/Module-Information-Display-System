@@ -9,29 +9,35 @@ body{
 }
 
 .node{
-    display: inline-block;
-    border-radius: 20%;
-    border: black thin solid;
-    background: gray;
-    min-width: 100px;
-    max-width: 150px;
     position: absolute;
     left: var(--Xpos);
     top: var(--Ypos);
-    z-index: 2;
-    padding-top: 1em;
+    min-width: 100px;
+    max-width: 150px;
+}
+
+.node{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: black thin solid;
+    background: floralwhite;
+    min-width: 100px;
+    max-width: 150px;
     padding-bottom: 1em;
 }
 
-interactive-node.dragging{
-    position: absolute;
-    z-index: 1;
+.drag-dot{
+    border-radius: 100%;
+    width: 20px;
+    height: 20px;
+    background-color: chocolate;
 }
 
 .nodeName{
     background-color: rgba(0,0,0,0);
     text-align: center;
-    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .leader-line{
