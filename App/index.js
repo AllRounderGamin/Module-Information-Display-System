@@ -8,11 +8,13 @@ function setUp() {
     basicNodeDiv.dataset.x = ((window.innerWidth / 2) - 50).toString();
     basicNodeDiv.dataset.y = ((window.innerHeight / 2) - 50).toString();
     basicNodeText.textContent = "Default Node";
+    basicNodeText.setAttribute("parent-id", "Node0");
     basicNode.querySelector(".drag-dot").setAttribute("parent-id", "Node0");
     basicNodeDiv.setAttribute("id", "Node0");
     document.querySelector("body").appendChild(basicNode);
     eventSetup(basicNodeDiv);
     localStorage.setItem("next-node-id", "1");
+    document.addEventListener("dragover", dragOverHandler);
 }
 
 function addNode(e) {
@@ -27,7 +29,8 @@ function addNode(e) {
     newNodeDiv.style.setProperty("--Ypos", e.clientY + "px");
     newNodeDiv.dataset.x = (e.clientX).toString();
     newNodeDiv.dataset.y = (e.clientY).toString();
-    newNodeDiv.setAttribute("id", "Node" + localStorage.getItem("next-node-id"));
+    newNodeDiv.setAttribute("id", newID);
+    newNodeText.setAttribute("parent-id", newID)
     newNodeText.textContent = "Placeholder";
     newNodeDiv.querySelector(".drag-dot").setAttribute("parent-id", newID);
     localStorage.setItem("next-node-id", (parseInt(localStorage.getItem("next-node-id")) + 1).toString());
@@ -38,27 +41,30 @@ function addNode(e) {
 
 function eventSetup(node) {
     node.addEventListener("dragstart", dragStartHandler);
-    node.addEventListener("dragover", dragHandler);
     node.addEventListener("drop", dropHandler);
     node.addEventListener("dragend", dragEndHandler);
 }
 
 function dragStartHandler(e) {
+    DRAG_TARGET = e.target;
     e.dataTransfer.setDragImage(new Image, 0, 0);
     if (e.target.hasAttribute("id")) {
         e.dataTransfer.setData("text/plain", e.target.getAttribute("id"));
-        DRAG_TARGET = e.target;
         DRAG_TYPE = "node";
-        e.target.classList.add("dragging");
     } else if (e.target.hasAttribute("parent-id")) {
         e.dataTransfer.setData("text/plain", e.target.getAttribute("parent-id"));
         DRAG_TYPE = "arrow";
         TEMP_LINE = new LeaderLine(document.querySelector(`#${e.target.getAttribute("parent-id")}`),
-            LeaderLine.pointAnchor(document, {x: e.pageX, y: e.pageY}), {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362', dash: {animation:true}});
+            LeaderLine.pointAnchor(document, {x: e.pageX, y: e.pageY}), {
+                gradient: true,
+                startPlugColor: "#009fe2",
+                endPlugColor: '#621362',
+                dash: {animation: true}
+            });
     }
 }
 
-function dragHandler(e) {
+function dragOverHandler(e) {
     e.preventDefault();
     if (DRAG_TYPE === "node") {
         DRAG_TARGET.style.setProperty("--Xpos", e.pageX - 50 + "px");
@@ -72,22 +78,21 @@ function dragHandler(e) {
         }
     } else if (DRAG_TYPE === "arrow") {
         TEMP_LINE.end = LeaderLine.pointAnchor({element: document.body, x: e.pageX, y: e.pageY});
-        console.log(e.pageX, e.pageY)
     }
 }
 
 function dropHandler(e) {
     e.preventDefault();
-    if (DRAG_TYPE === "arrow"){
-        TEMP_LINE.remove();
+    if (DRAG_TYPE === "node"){
         return;
     }
     let dropTarget;
-    if (e.target.getAttribute("parentid") != null) {
-        dropTarget = document.querySelector(`#${e.target.getAttribute("parentid")}`);
+    if (e.target.getAttribute("parent-id") != null) {
+        dropTarget = document.querySelector(`#${e.target.getAttribute("parent-id")}`);
     } else {
         dropTarget = e.target;
     }
+    DRAG_TARGET = document.querySelector(`#${DRAG_TARGET.getAttribute("parent-id")}`)
     const lineName = DRAG_TARGET.id + dropTarget.id;
     if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
         let found = false;
@@ -106,7 +111,7 @@ function dropHandler(e) {
                 DRAG_TARGET,
                 dropTarget,
                 {gradient: true, startPlugColor: "#009fe2", endPlugColor: '#621362'}
-        );
+            );
             CONNECTED_NODES[DRAG_TARGET.id].lines.push({line: line, key: lineName});
             CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
             CONNECTED_NODES[dropTarget.id].lines.push({line: line, key: lineName});
@@ -143,20 +148,17 @@ function keySearch(arr, key) {
     return false;
 }
 
-function dragEndHandler(e) {
-    e.target.classList.remove("dragging");
-    document.querySelector("body").removeChild(DRAG_TARGET);
-    document.querySelector("body").appendChild(DRAG_TARGET);
+function dragEndHandler() {
+    if (DRAG_TYPE === "node") {
+        document.querySelector("body").removeChild(DRAG_TARGET);
+        document.querySelector("body").appendChild(DRAG_TARGET);
+    } else if (DRAG_TYPE === "arrow") {
+        TEMP_LINE.remove();
+    }
 }
 
-window.addEventListener("load", setUp);
 const CONNECTED_NODES = {};
 let DRAG_TARGET = undefined;
 let DRAG_TYPE = undefined;
 let TEMP_LINE = undefined;
-
-
-/*
-    Find way to change CSS to use attr() and remove the css prop entirely
-    Find how to not have overflow, without needing to use overflow:hidden
-  */
+window.addEventListener("load", setUp);

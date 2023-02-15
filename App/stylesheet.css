@@ -12,14 +12,8 @@ body{
     position: absolute;
     left: var(--Xpos);
     top: var(--Ypos);
-    z-index: 2;
     min-width: 100px;
     max-width: 150px;
-}
-
-.node.dragging{
-    position: absolute;
-    z-index: 1;
 }
 
 .node{
@@ -38,7 +32,6 @@ body{
     width: 20px;
     height: 20px;
     background-color: chocolate;
-    z-index: 5;
 }
 
 .nodeName{
