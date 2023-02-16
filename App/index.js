@@ -82,6 +82,7 @@ function dragOverHandler(e) {
 }
 
 function dropHandler(e) {
+  console.log(CONNECTED_NODES);
   e.preventDefault();
   if (DRAG_TYPE === 'node') {
     return;
@@ -94,6 +95,7 @@ function dropHandler(e) {
   }
   DRAG_TARGET = document.querySelector(`#${DRAG_TARGET.getAttribute('parent-id')}`);
   const lineName = DRAG_TARGET.id + dropTarget.id;
+  const inverseLine = dropTarget.id + DRAG_TARGET.id;
   if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
     let found = false;
     if (CONNECTED_NODES[DRAG_TARGET.id]) {
@@ -101,22 +103,58 @@ function dropHandler(e) {
     } else {
       CONNECTED_NODES[DRAG_TARGET.id] = { lines: [], keys: [] };
     }
-    if (!found && CONNECTED_NODES[dropTarget.id]) {
-      found = objectSearch(lineName, CONNECTED_NODES[dropTarget.id].keys);
+    if (CONNECTED_NODES[dropTarget.id]) {
+      if (found === false) {
+        found = objectSearch(lineName, CONNECTED_NODES[dropTarget.id].keys);
+      }
     } else {
       CONNECTED_NODES[dropTarget.id] = { lines: [], keys: [] };
     }
     if (found === false) {
+      if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
+        let lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, inverseLine);
+        console.log('DEBUG', JSON.stringify(CONNECTED_NODES), lineIndex, DRAG_TARGET);
+        CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].line.startPlug = 'arrow1';
+        CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.push(lineName);
+        CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
+        lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
+        console.log(lineIndex);
+        CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.push(lineName);
+        CONNECTED_NODES[dropTarget.id].keys.push(lineName);
+        console.log(CONNECTED_NODES);
+        return;
+      }
       const line = new LeaderLine(
         DRAG_TARGET,
         dropTarget,
         { gradient: true, startPlugColor: '#009fe2', endPlugColor: '#621362' },
       );
-      CONNECTED_NODES[DRAG_TARGET.id].lines.push({ line, key: lineName });
+      CONNECTED_NODES[DRAG_TARGET.id].lines.push({ line, keys: [lineName] });
       CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-      CONNECTED_NODES[dropTarget.id].lines.push({ line, key: lineName });
+      CONNECTED_NODES[dropTarget.id].lines.push({ line, keys: [lineName] });
       CONNECTED_NODES[dropTarget.id].keys.push(lineName);
     } else {
+      if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
+        let lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
+        let removalTarget, removalIndex;
+        if (CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys[0] === lineName) {
+          CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.endPlug = 'behind';
+          removalTarget = lineName;
+        } else {
+          CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.startPlug = 'behind';
+          CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.splice(CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.indexOf(inverseLine), 1);
+          removalTarget = inverseLine;
+        }
+        removalIndex = CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.indexOf(removalTarget);
+        CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.splice(removalIndex, 1);
+        CONNECTED_NODES[dropTarget.id].keys.splice(removalIndex, 1);
+        lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, removalTarget);
+        removalIndex = CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.indexOf(removalTarget);
+        CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.splice(removalIndex, 1);
+        CONNECTED_NODES[DRAG_TARGET.id].keys.splice(removalIndex, 1);
+        console.log(CONNECTED_NODES);
+        return;
+      }
       let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, lineName);
       CONNECTED_NODES[DRAG_TARGET.id].lines[objIndex].line.remove();
       CONNECTED_NODES[DRAG_TARGET.id].lines.splice(objIndex, 1);
@@ -125,7 +163,6 @@ function dropHandler(e) {
       objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, lineName);
       CONNECTED_NODES[dropTarget.id].lines.splice(objIndex, 1);
       CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName), 1);
-
     }
     console.log(CONNECTED_NODES);
   }
@@ -141,8 +178,9 @@ function objectSearch(obj, arr) {
 }
 
 function keySearch(arr, key) {
+  console.log(arr, key);
   for (let i = 0; i < arr.length; i++) {
-    if (arr[i].key === key) {
+    if (arr[i].keys.includes(key)) {
       return i;
     }
   }
