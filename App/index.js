@@ -82,7 +82,6 @@ function dragOverHandler(e) {
 }
 
 function dropHandler(e) {
-  console.log(CONNECTED_NODES);
   e.preventDefault();
   if (DRAG_TYPE === 'node') {
     return;
@@ -113,15 +112,12 @@ function dropHandler(e) {
     if (found === false) {
       if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
         let lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, inverseLine);
-        console.log('DEBUG', JSON.stringify(CONNECTED_NODES), lineIndex, DRAG_TARGET);
         CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].line.startPlug = 'arrow1';
         CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.push(lineName);
         CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
         lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
-        console.log(lineIndex);
         CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.push(lineName);
         CONNECTED_NODES[dropTarget.id].keys.push(lineName);
-        console.log(CONNECTED_NODES);
         return;
       }
       const line = new LeaderLine(
@@ -136,15 +132,13 @@ function dropHandler(e) {
     } else {
       if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
         let lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
-        let removalTarget, removalIndex;
+        let removalIndex;
         if (CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys[0] === lineName) {
           CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.endPlug = 'behind';
-          removalTarget = lineName;
         } else {
           CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.startPlug = 'behind';
-          CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.splice(CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.indexOf(inverseLine), 1);
-          removalTarget = inverseLine;
         }
+        const removalTarget = lineName;
         removalIndex = CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.indexOf(removalTarget);
         CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.splice(removalIndex, 1);
         CONNECTED_NODES[dropTarget.id].keys.splice(removalIndex, 1);
@@ -152,7 +146,6 @@ function dropHandler(e) {
         removalIndex = CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.indexOf(removalTarget);
         CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.splice(removalIndex, 1);
         CONNECTED_NODES[DRAG_TARGET.id].keys.splice(removalIndex, 1);
-        console.log(CONNECTED_NODES);
         return;
       }
       let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, lineName);
@@ -178,7 +171,6 @@ function objectSearch(obj, arr) {
 }
 
 function keySearch(arr, key) {
-  console.log(arr, key);
   for (let i = 0; i < arr.length; i++) {
     if (arr[i].keys.includes(key)) {
       return i;
