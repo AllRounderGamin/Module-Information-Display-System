@@ -1,20 +1,11 @@
 /* eslint-disable no-undef */
+import { updateDragPos, objectSearch, lineSearch } from './scripts/util.js';
+import { createNewLine, doubleTippedArrow, unDoubleTipArrow, removeLine } from './scripts/lineFunctions.js';
 
 function setUp() {
   document.addEventListener('dblclick', addNode);
-  const basicNode = document.querySelector('#nodeTemplate').content.cloneNode(true);
-  const basicNodeDiv = basicNode.querySelector('.node');
-  const basicNodeText = basicNodeDiv.querySelector('.nodeName');
-  basicNodeDiv.style.setProperty('--Xpos', (window.innerWidth / 2) - 50 + 'px');
-  basicNodeDiv.style.setProperty('--Ypos', (window.innerHeight / 2) - 50 + 'px');
-  basicNodeDiv.dataset.x = ((window.innerWidth / 2) - 50).toString();
-  basicNodeDiv.dataset.y = ((window.innerHeight / 2) - 50).toString();
-  basicNodeText.textContent = 'Default Node';
-  basicNodeText.setAttribute('parent-id', 'Node0');
-  basicNode.querySelector('.drag-dot').setAttribute('parent-id', 'Node0');
-  basicNodeDiv.setAttribute('id', 'Node0');
+  const basicNode = createNode({ id: 'Node0', x: window.innerWidth / 2 - 50, y: window.innerHeight / 2 - 50, text: 'Default Node' });
   document.querySelector('body').appendChild(basicNode);
-  eventSetup(basicNodeDiv);
   localStorage.setItem('next-node-id', '1');
   document.addEventListener('dragover', dragOverHandler);
 }
@@ -24,21 +15,25 @@ function addNode(e) {
     return;
   }
   const newID = 'Node' + localStorage.getItem('next-node-id');
+  const newNode = createNode({ id: newID, x: e.clientX, y: e.clientY, text: 'Placeholder' });
+  localStorage.setItem('next-node-id', (parseInt(localStorage.getItem('next-node-id')) + 1).toString());
+  document.querySelector('body').appendChild(newNode);
+}
+
+function createNode(settings) {
   const newNode = document.querySelector('#nodeTemplate').content.cloneNode(true);
   const newNodeDiv = newNode.querySelector('.node');
   const newNodeText = newNodeDiv.querySelector('.nodeName');
-  newNodeDiv.style.setProperty('--Xpos', e.clientX + 'px');
-  newNodeDiv.style.setProperty('--Ypos', e.clientY + 'px');
-  newNodeDiv.dataset.x = (e.clientX).toString();
-  newNodeDiv.dataset.y = (e.clientY).toString();
-  newNodeDiv.setAttribute('id', newID);
-  newNodeText.setAttribute('parent-id', newID);
-  newNodeText.textContent = 'Placeholder';
-  newNodeDiv.querySelector('.drag-dot').setAttribute('parent-id', newID);
-  localStorage.setItem('next-node-id', (parseInt(localStorage.getItem('next-node-id')) + 1).toString());
-  document.querySelector('body').appendChild(newNode);
+  newNodeDiv.style.setProperty('--Xpos', settings.x + 'px');
+  newNodeDiv.style.setProperty('--Ypos', settings.y + 'px');
+  newNodeDiv.dataset.x = (settings.x).toString();
+  newNodeDiv.dataset.y = (settings.y).toString();
+  newNodeDiv.setAttribute('id', settings.id);
+  newNodeText.setAttribute('parent-id', settings.id);
+  newNodeText.textContent = settings.text;
+  newNodeDiv.querySelector('.drag-dot').setAttribute('parent-id', settings.id);
   eventSetup(newNodeDiv);
-  newNodeText.focus();
+  return newNode;
 }
 
 function eventSetup(node) {
@@ -67,10 +62,7 @@ function dragStartHandler(e) {
 function dragOverHandler(e) {
   e.preventDefault();
   if (DRAG_TYPE === 'node') {
-    DRAG_TARGET.style.setProperty('--Xpos', e.pageX - 50 + 'px');
-    DRAG_TARGET.style.setProperty('--Ypos', e.pageY - 50 + 'px');
-    DRAG_TARGET.dataset.x = (e.pageX - 50).toString();
-    DRAG_TARGET.dataset.y = (e.pageY - 50).toString();
+    updateDragPos(DRAG_TARGET, { x: e.pageX, y: e.pageY });
     if (CONNECTED_NODES[DRAG_TARGET.id]) {
       for (const lineObj of CONNECTED_NODES[DRAG_TARGET.id].lines) {
         lineObj.line.position();
@@ -83,9 +75,11 @@ function dragOverHandler(e) {
 
 function dropHandler(e) {
   e.preventDefault();
+  // cancels event if a node was dropped and not an arrow
   if (DRAG_TYPE === 'node') {
     return;
   }
+  // updates drop target to be the node so that the arrow doesnt try to connect to a div inside the node
   let dropTarget;
   if (e.target.getAttribute('parent-id') != null) {
     dropTarget = document.querySelector(`#${e.target.getAttribute('parent-id')}`);
@@ -96,87 +90,25 @@ function dropHandler(e) {
   const lineName = DRAG_TARGET.id + dropTarget.id;
   const inverseLine = dropTarget.id + DRAG_TARGET.id;
   if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
-    let found = false;
-    if (CONNECTED_NODES[DRAG_TARGET.id]) {
-      found = objectSearch(lineName, CONNECTED_NODES[DRAG_TARGET.id].keys);
-    } else {
-      CONNECTED_NODES[DRAG_TARGET.id] = { lines: [], keys: [] };
-    }
-    if (CONNECTED_NODES[dropTarget.id]) {
-      if (found === false) {
-        found = objectSearch(lineName, CONNECTED_NODES[dropTarget.id].keys);
-      }
-    } else {
-      CONNECTED_NODES[dropTarget.id] = { lines: [], keys: [] };
-    }
-    if (found === false) {
+    // checks to see if the line already exists or if the inverse line exists
+    if (lineSearch(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget) === false) {
       if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
-        let lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, inverseLine);
-        CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].line.startPlug = 'arrow1';
-        CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.push(lineName);
-        CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-        lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
-        CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.push(lineName);
-        CONNECTED_NODES[dropTarget.id].keys.push(lineName);
+        doubleTippedArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget);
         return;
       }
-      const line = new LeaderLine(
-        DRAG_TARGET,
-        dropTarget,
-        { gradient: true, startPlugColor: '#009fe2', endPlugColor: '#621362' },
-      );
-      CONNECTED_NODES[DRAG_TARGET.id].lines.push({ line, keys: [lineName] });
-      CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-      CONNECTED_NODES[dropTarget.id].lines.push({ line, keys: [lineName] });
-      CONNECTED_NODES[dropTarget.id].keys.push(lineName);
+      // if line and inverse line does not exist makes a new line object
+      createNewLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget);
     } else {
+      // if inverse line key exists, modify existing line back to single tipped
       if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
-        let lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
-        let removalIndex;
-        if (CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys[0] === lineName) {
-          CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.endPlug = 'behind';
-        } else {
-          CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.startPlug = 'behind';
-        }
-        const removalTarget = lineName;
-        removalIndex = CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.indexOf(removalTarget);
-        CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.splice(removalIndex, 1);
-        CONNECTED_NODES[dropTarget.id].keys.splice(removalIndex, 1);
-        lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, removalTarget);
-        removalIndex = CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.indexOf(removalTarget);
-        CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.splice(removalIndex, 1);
-        CONNECTED_NODES[DRAG_TARGET.id].keys.splice(removalIndex, 1);
+        unDoubleTipArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget);
         return;
+      } else {
+        removeLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget);
       }
-      let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, lineName);
-      CONNECTED_NODES[DRAG_TARGET.id].lines[objIndex].line.remove();
-      CONNECTED_NODES[DRAG_TARGET.id].lines.splice(objIndex, 1);
-      CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName), 1);
-
-      objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, lineName);
-      CONNECTED_NODES[dropTarget.id].lines.splice(objIndex, 1);
-      CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName), 1);
     }
     console.log(CONNECTED_NODES);
   }
-}
-
-function objectSearch(obj, arr) {
-  for (const object of arr) {
-    if (JSON.stringify(object) === JSON.stringify(obj)) {
-      return arr.indexOf(object);
-    }
-  }
-  return false;
-}
-
-function keySearch(arr, key) {
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i].keys.includes(key)) {
-      return i;
-    }
-  }
-  return false;
 }
 
 function dragEndHandler() {
