@@ -45,3 +45,17 @@ body{
     z-index: 0;
     background-color: rgba(0,0,0,0);
 }
+
+#buttonArea{
+    position: sticky;
+    top: 0;
+}
+
+#save{
+    position: absolute;
+    right: 10px;
+}
+
+#saveButton{
+    background-color: darkgray;
+}

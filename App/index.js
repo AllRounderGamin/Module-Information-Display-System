@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import { updateDragPos } from './scripts/util.js';
 import { connectLine } from './scripts/lineFunctions.js';
+import { saveData } from './scripts/saving.js';
 
 function setUp() {
   document.addEventListener('dblclick', addNode);
@@ -8,6 +9,7 @@ function setUp() {
   document.querySelector('body').appendChild(basicNode);
   localStorage.setItem('next-node-id', '1');
   document.addEventListener('dragover', dragOverHandler);
+  document.querySelector('#saveButton').addEventListener('click', save);
 }
 
 function addNode(e) {
@@ -103,7 +105,19 @@ function dragEndHandler() {
   }
 }
 
-const CONNECTED_NODES = {};
+function save() {
+  const nodeData = [];
+  const nodeList = document.querySelectorAll('.node');
+  for (const node of nodeList) {
+    nodeData.push({
+      id: node.id,
+      text: node.querySelector('.nodeName').textContent,
+      position: { x: node.dataset.x, y: node.dataset.y },
+    });
+  }
+  console.log(saveData(nodeData, NODE_LIST));
+}
+
 const NODE_LIST = {};
 let DRAG_TARGET;
 let DRAG_TYPE;
