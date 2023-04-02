@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import { updateDragPos } from './scripts/util.js';
 import { connectLine } from './scripts/lineFunctions.js';
-import { saveData } from './scripts/saving.js';
+import { createJsonldData } from './scripts/saving.js';
 
 function setUp() {
   document.addEventListener('dblclick', addNode);
@@ -10,6 +10,7 @@ function setUp() {
   localStorage.setItem('next-node-id', '1');
   document.addEventListener('dragover', dragOverHandler);
   document.querySelector('#saveButton').addEventListener('click', save);
+  document.querySelector('#loadButton').addEventListener('click', loadData);
 }
 
 function addNode(e) {
@@ -115,7 +116,32 @@ function save() {
       position: { x: node.dataset.x, y: node.dataset.y },
     });
   }
-  console.log(saveData(nodeData, NODE_LIST));
+  const jsonldData = JSON.stringify((createJsonldData(nodeData, NODE_LIST)), null, 4);
+  document.querySelector('#downloadLink').href = 'data:application/javascript;charset=utf-8,' + encodeURIComponent(jsonldData);
+}
+
+async function loadData() {
+  let json = await fetch('../timelinedata(1).jsonld');
+  json = await json.json();
+  console.log(JSON.stringify(json));
+  for (const node of document.querySelectorAll('.node')) {
+    node.remove();
+    delete NODE_LIST[node.id];
+  }
+  for (const line of document.querySelectorAll('.leader-line')) {
+    line.remove();
+  }
+  for (const node of json) {
+    console.log(node);
+    const newNode = createNode({ id: node.id, x: node.position.x, y: node.position.y, text: node.text });
+    document.querySelector('body').appendChild(newNode);
+  }
+  for (const node of json) {
+    for (const line of node.links_to) {
+      console.log(NODE_LIST, node.id, line, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+      connectLine(NODE_LIST, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+    }
+  }
 }
 
 const NODE_LIST = {};

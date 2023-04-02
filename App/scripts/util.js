@@ -6,10 +6,18 @@ function updateDragPos(dragTarget, pos) {
 }
 
 // Searches through given array to find object representing the line linked to endNode, returns false if does not exist
-function lineSearch(node, endNode) {
-  for (const obj of node) {
-    if (obj.linked === endNode) {
-      return obj;
+function lineSearch(node, endNode, type) {
+  if (type === 'to') {
+    for (const obj of node) {
+      if (obj.linked_to === endNode) {
+        return obj;
+      }
+    }
+  } else if (type === 'from') {
+    for (const obj of node) {
+      if (obj.linked_from === endNode) {
+        return obj;
+      }
     }
   }
   return false;
