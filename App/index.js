@@ -121,7 +121,7 @@ function save() {
 }
 
 async function loadData() {
-  let json = await fetch('../timelinedata(1).jsonld');
+  let json = await fetch('../testData.jsonld');
   json = await json.json();
   console.log(JSON.stringify(json));
   for (const node of document.querySelectorAll('.node')) {
