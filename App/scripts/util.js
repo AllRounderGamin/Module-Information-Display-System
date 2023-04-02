@@ -5,36 +5,14 @@ function updateDragPos(dragTarget, pos) {
   dragTarget.dataset.y = (pos.y - 50).toString();
 }
 
-function objectSearch(obj, arr) {
-  for (const object of arr) {
-    if (JSON.stringify(object) === JSON.stringify(obj)) {
-      return arr.indexOf(object);
+// Searches through given array to find object representing the line linked to endNode, returns false if does not exist
+function lineSearch(node, endNode) {
+  for (const obj of node) {
+    if (obj.linked === endNode) {
+      return obj;
     }
   }
   return false;
 }
 
-function keySearch(arr, key) {
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i].keys.includes(key)) {
-      return i;
-    }
-  }
-  return false;
-}
-
-// checks both targets for existence of line and also creates an object for the node if it does not exist
-function lineSearch(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget) {
-  let found = false;
-  if (CONNECTED_NODES[DRAG_TARGET.id]) {
-    found = objectSearch(lineName, CONNECTED_NODES[DRAG_TARGET.id].keys);
-  } else {
-    CONNECTED_NODES[DRAG_TARGET.id] = { lines: [], keys: [] };
-  }
-  if (!CONNECTED_NODES[dropTarget.id]) {
-    CONNECTED_NODES[dropTarget.id] = { lines: [], keys: [] };
-  }
-  return found;
-}
-
-export { updateDragPos, objectSearch, keySearch, lineSearch };
+export { updateDragPos, lineSearch };

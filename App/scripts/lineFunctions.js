@@ -1,59 +1,69 @@
 /* eslint-disable no-undef */
-import { keySearch } from './util.js';
+import { lineSearch } from './util.js';
 
 // makes the arrow tipped at both ends and adds the new lineName to the key lists
-function doubleTippedArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget) {
-  let lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, inverseLine);
-  CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].line.startPlug = 'arrow1';
-  CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.push(lineName);
-  CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-  lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
-  CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.push(lineName);
-  CONNECTED_NODES[dropTarget.id].keys.push(lineName);
+function doubleTippedArrow(NODE_LIST, startNode, endNode) {
+  const nodeLinkObj = lineSearch(NODE_LIST[endNode], startNode);
+  const line = nodeLinkObj.line;
+  if (nodeLinkObj.endPoint) {
+    line.endPlug = 'arrow1';
+    NODE_LIST[startNode].push({ linked: endNode, line });
+  } else {
+    line.startPlug = 'arrow1';
+    NODE_LIST[startNode].push({ linked: endNode, line, endPoint: true });
+  }
 }
 
 // creates new LeaderLine obj and adds to storage
-function createNewLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget) {
+function createNewLine(NODE_LIST, startNode, endNode) {
   const line = new LeaderLine(
-    DRAG_TARGET,
-    dropTarget,
+    startNode,
+    endNode,
     { gradient: true, startPlugColor: '#009fe2', endPlugColor: '#621362' },
   );
-  CONNECTED_NODES[DRAG_TARGET.id].lines.push({ line, keys: [lineName] });
-  CONNECTED_NODES[DRAG_TARGET.id].keys.push(lineName);
-  CONNECTED_NODES[dropTarget.id].lines.push({ line, keys: [lineName] });
-  CONNECTED_NODES[dropTarget.id].keys.push(lineName);
+  NODE_LIST[startNode.id].push({ linked: endNode.id, line });
 }
 
 // removes one of the arrow tips depending on user input and what arrow came first
-function unDoubleTipArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget) {
-  let lineIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, inverseLine);
-  let removalIndex;
-  if (CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys[0] === lineName) {
-    CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.endPlug = 'behind';
+function unDoubleTipArrow(NODE_LIST, startNode, endNode) {
+  const nodeLinkObj = lineSearch(NODE_LIST[startNode], endNode);
+  const lineIndex = NODE_LIST[startNode].indexOf(nodeLinkObj);
+  if (nodeLinkObj.endPoint) {
+    nodeLinkObj.line.startPlug = 'behind';
   } else {
-    CONNECTED_NODES[dropTarget.id].lines[lineIndex].line.startPlug = 'behind';
+    nodeLinkObj.line.endPlug = 'behind';
   }
-  const removalTarget = lineName;
-  removalIndex = CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.indexOf(removalTarget);
-  CONNECTED_NODES[dropTarget.id].lines[lineIndex].keys.splice(removalIndex, 1);
-  CONNECTED_NODES[dropTarget.id].keys.splice(removalIndex, 1);
-  lineIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, removalTarget);
-  removalIndex = CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.indexOf(removalTarget);
-  CONNECTED_NODES[DRAG_TARGET.id].lines[lineIndex].keys.splice(removalIndex, 1);
-  CONNECTED_NODES[DRAG_TARGET.id].keys.splice(removalIndex, 1);
+  NODE_LIST[startNode].splice(lineIndex, 1);
 }
 
 // completely removes line object from page and storage
-function removeLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget) {
-  let objIndex = keySearch(CONNECTED_NODES[DRAG_TARGET.id].lines, lineName);
-  CONNECTED_NODES[DRAG_TARGET.id].lines[objIndex].line.remove();
-  CONNECTED_NODES[DRAG_TARGET.id].lines.splice(objIndex, 1);
-  CONNECTED_NODES[DRAG_TARGET.id].keys.splice(CONNECTED_NODES[DRAG_TARGET.id].keys.indexOf(lineName), 1);
-
-  objIndex = keySearch(CONNECTED_NODES[dropTarget.id].lines, lineName);
-  CONNECTED_NODES[dropTarget.id].lines.splice(objIndex, 1);
-  CONNECTED_NODES[dropTarget.id].keys.splice(CONNECTED_NODES[dropTarget.id].keys.indexOf(lineName), 1);
+function removeLine(NODE_LIST, startNode, endNode) {
+  const nodeLinkObj = lineSearch(NODE_LIST[startNode], endNode);
+  nodeLinkObj.line.remove();
+  const lineIndex = NODE_LIST[startNode].indexOf(nodeLinkObj);
+  NODE_LIST[startNode].splice(lineIndex, 1);
 }
 
-export { createNewLine, doubleTippedArrow, unDoubleTipArrow, removeLine };
+// function for deciding how to correctly connect nodes
+function connectLine(NODE_LIST, startNode, endNode) {
+  // checks to see if the line already exists or if the inverse line exists, if so makes the line 'double tipped'
+  if (lineSearch(NODE_LIST[startNode.id], endNode.id) === false) {
+    if (lineSearch(NODE_LIST[endNode.id], startNode.id) !== false) {
+      doubleTippedArrow(NODE_LIST, startNode.id, endNode.id);
+      console.log(JSON.stringify(NODE_LIST));
+      return;
+    }
+    // if line and inverse line does not exist makes a new line object
+    createNewLine(NODE_LIST, startNode, endNode);
+  } else {
+    // if inverse line key exists, modify existing line back to single tipped
+    if (lineSearch(NODE_LIST[endNode.id], startNode.id) !== false) {
+      unDoubleTipArrow(NODE_LIST, startNode.id, endNode.id);
+      console.log(JSON.stringify(NODE_LIST));
+    } else {
+      removeLine(NODE_LIST, startNode.id, endNode.id);
+    }
+  }
+}
+
+export { connectLine };

@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-import { updateDragPos, objectSearch, lineSearch } from './scripts/util.js';
-import { createNewLine, doubleTippedArrow, unDoubleTipArrow, removeLine } from './scripts/lineFunctions.js';
+import { updateDragPos } from './scripts/util.js';
+import { connectLine } from './scripts/lineFunctions.js';
 
 function setUp() {
   document.addEventListener('dblclick', addNode);
@@ -33,6 +33,7 @@ function createNode(settings) {
   newNodeText.textContent = settings.text;
   newNodeDiv.querySelector('.drag-dot').setAttribute('parent-id', settings.id);
   eventSetup(newNodeDiv);
+  NODE_LIST[settings.id] = [];
   return newNode;
 }
 
@@ -63,9 +64,9 @@ function dragOverHandler(e) {
   e.preventDefault();
   if (DRAG_TYPE === 'node') {
     updateDragPos(DRAG_TARGET, { x: e.pageX, y: e.pageY });
-    if (CONNECTED_NODES[DRAG_TARGET.id]) {
-      for (const lineObj of CONNECTED_NODES[DRAG_TARGET.id].lines) {
-        lineObj.line.position();
+    if (NODE_LIST[DRAG_TARGET.id]) {
+      for (const obj of NODE_LIST[DRAG_TARGET.id]) {
+        obj.line.position();
       }
     }
   } else if (DRAG_TYPE === 'arrow') {
@@ -80,35 +81,17 @@ function dropHandler(e) {
     return;
   }
   // updates drop target to be the node so that the arrow doesnt try to connect to a div inside the node
-  let dropTarget;
+  let endNode;
   if (e.target.getAttribute('parent-id') != null) {
-    dropTarget = document.querySelector(`#${e.target.getAttribute('parent-id')}`);
+    endNode = document.querySelector(`#${e.target.getAttribute('parent-id')}`);
   } else {
-    dropTarget = e.target;
+    endNode = e.target;
   }
-  DRAG_TARGET = document.querySelector(`#${DRAG_TARGET.getAttribute('parent-id')}`);
-  const lineName = DRAG_TARGET.id + dropTarget.id;
-  const inverseLine = dropTarget.id + DRAG_TARGET.id;
-  if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
-    // checks to see if the line already exists or if the inverse line exists
-    if (lineSearch(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget) === false) {
-      if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
-        doubleTippedArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget);
-        return;
-      }
-      // if line and inverse line does not exist makes a new line object
-      createNewLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget);
-    } else {
-      // if inverse line key exists, modify existing line back to single tipped
-      if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
-        unDoubleTipArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget);
-        return;
-      } else {
-        removeLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget);
-      }
-    }
-    console.log(CONNECTED_NODES);
+  const startNode = document.querySelector(`#${DRAG_TARGET.getAttribute('parent-id')}`);
+  if (startNode.id !== endNode.id && startNode.id.length > 0 && endNode.id.length > 0) {
+    connectLine(NODE_LIST, startNode, endNode);
   }
+  console.log(JSON.stringify(NODE_LIST));
 }
 
 function dragEndHandler() {
@@ -121,6 +104,7 @@ function dragEndHandler() {
 }
 
 const CONNECTED_NODES = {};
+const NODE_LIST = {};
 let DRAG_TARGET;
 let DRAG_TYPE;
 let TEMP_LINE;
