@@ -65,6 +65,9 @@ function dragStartHandler(e) {
 
 function dragOverHandler(e) {
   e.preventDefault();
+  if (!DRAG_TARGET) {
+    return;
+  }
   if (DRAG_TYPE === 'node') {
     updateDragPos(DRAG_TARGET, { x: e.pageX, y: e.pageY });
     if (NODE_LIST[DRAG_TARGET.id]) {
@@ -79,6 +82,14 @@ function dragOverHandler(e) {
 
 function dropHandler(e) {
   e.preventDefault();
+  /* if (e.dataTransfer.files && e.dataTransfer.files[0].type === 'application/json') {
+    loadData(e.dataTransfer.files[0]);
+    const reader = new FileReader();
+    reader.onload = () => {
+      addDataToUI(JSON.parse(reader.result));
+    };
+    reader.readAsText(f);
+  } */
   // cancels event if a node was dropped and not an arrow
   if (DRAG_TYPE === 'node') {
     return;
@@ -104,6 +115,7 @@ function dragEndHandler() {
   } else if (DRAG_TYPE === 'arrow') {
     TEMP_LINE.remove();
   }
+  DRAG_TARGET = null;
 }
 
 function save() {
