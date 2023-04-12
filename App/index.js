@@ -10,7 +10,6 @@ function setUp() {
   document.addEventListener('dragover', dragOverHandler);
   document.body.addEventListener('drop', fileDropHandler);
   document.querySelector('#saveButton').addEventListener('click', save);
-  document.querySelector('#loadButton').addEventListener('click', loadData);
 }
 
 function addNode(e) {
@@ -124,7 +123,7 @@ function dragEndHandler() {
   DRAG_TARGET = null;
 }
 
-function save() {
+function save(dataReq = false) {
   const nodeData = [];
   const nodeList = document.querySelectorAll('.node');
   for (const node of nodeList) {
@@ -135,28 +134,38 @@ function save() {
     });
   }
   const jsonldData = JSON.stringify((createJsonldData(nodeData, NODE_LIST)), null, 4);
+  if (dataReq === true) {
+    return jsonldData;
+  }
   document.querySelector('#downloadLink').href = 'data:application/javascript;charset=utf-8,' + encodeURIComponent(jsonldData);
 }
 
 function loadData(file) {
   const data = JSON.parse(file);
-  for (const node of document.querySelectorAll('.node')) {
-    node.remove();
-    delete NODE_LIST[node.id];
-  }
-  for (const line of document.querySelectorAll('.leader-line')) {
-    line.remove();
-  }
-  for (const node of data) {
-    console.log(node);
-    const newNode = createNode({ id: node.id, x: node.position.x, y: node.position.y, text: node.text });
-    document.body.appendChild(newNode);
-  }
-  for (const node of data) {
-    for (const line of node.links_to) {
-      console.log(NODE_LIST, node.id, line, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
-      connectLine(NODE_LIST, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+  const backup = save(true);
+  try {
+    for (const node of document.querySelectorAll('.node')) {
+      node.remove();
+      delete NODE_LIST[node.id];
     }
+    for (const line of document.querySelectorAll('.leader-line')) {
+      line.remove();
+    }
+    for (const node of data) {
+      console.log(node);
+      const newNode = createNode({ id: node.id, x: node.position.x, y: node.position.y, text: node.text });
+      document.body.appendChild(newNode);
+    }
+    for (const node of data) {
+      for (const line of node.links_to) {
+        console.log(NODE_LIST, node.id, line, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+        connectLine(NODE_LIST, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+      }
+    }
+  } catch (error) {
+    console.error('File could not be loaded, reverting data');
+    console.error(error);
+    loadData(backup);
   }
 }
 

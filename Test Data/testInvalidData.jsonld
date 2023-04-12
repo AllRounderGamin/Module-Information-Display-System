@@ -1,0 +1,57 @@
+[
+    {
+        "@context": "UOP:Node",
+        "text": "Default Node",
+        "position": {
+            "y": "305.5"
+        },
+        "links_to": [
+            "Node1"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node1",
+        "text": "Placeholder",
+        "position": {
+            "x": "620",
+            "y": "299"
+        },
+        "links_to": [
+            "Node0"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node2",
+        "text": "Placeholder",
+        "links_to": [
+            "Node0",
+            "Node4"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node3",
+        "text": "Placeholder",
+        "position": {
+            "x": "563",
+            "y": "521"
+        },
+        "links_to": [
+            "Node1"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node4",
+        "text": "Placeholder",
+        "position": {
+            "x": "181",
+            "y": "524"
+        },
+        "links_to": [
+            "Node0"
+        ]
+    }
+]
