@@ -6,9 +6,9 @@ import { createJsonldData } from './scripts/saving.js';
 function setUp() {
   document.addEventListener('dblclick', addNode);
   const basicNode = createNode({ id: 'Node0', x: window.innerWidth / 2 - 50, y: window.innerHeight / 2 - 50, text: 'Default Node' });
-  document.querySelector('body').appendChild(basicNode);
-  localStorage.setItem('next-node-id', '1');
+  document.body.appendChild(basicNode);
   document.addEventListener('dragover', dragOverHandler);
+  document.body.addEventListener('drop', fileDropHandler);
   document.querySelector('#saveButton').addEventListener('click', save);
   document.querySelector('#loadButton').addEventListener('click', loadData);
 }
@@ -42,7 +42,7 @@ function createNode(settings) {
 
 function eventSetup(node) {
   node.addEventListener('dragstart', dragStartHandler);
-  node.addEventListener('drop', dropHandler);
+  node.addEventListener('drop', nodeDropHandler);
   node.addEventListener('dragend', dragEndHandler);
 }
 
@@ -80,16 +80,8 @@ function dragOverHandler(e) {
   }
 }
 
-function dropHandler(e) {
+function nodeDropHandler(e) {
   e.preventDefault();
-  /* if (e.dataTransfer.files && e.dataTransfer.files[0].type === 'application/json') {
-    loadData(e.dataTransfer.files[0]);
-    const reader = new FileReader();
-    reader.onload = () => {
-      addDataToUI(JSON.parse(reader.result));
-    };
-    reader.readAsText(f);
-  } */
   // cancels event if a node was dropped and not an arrow
   if (DRAG_TYPE === 'node') {
     return;
@@ -108,10 +100,24 @@ function dropHandler(e) {
   console.log(JSON.stringify(NODE_LIST));
 }
 
+function fileDropHandler(e) {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) {
+    const fileName = e.dataTransfer.files[0].name.split('.');
+    // eslint-disable-next-line no-constant-condition
+    if (fileName[fileName.length - 1] === 'json' || 'jsonld') {
+      const reader = new FileReader();
+      reader.readAsText(e.dataTransfer.files[0]);
+      reader.onload = () => { loadData(reader.result); };
+    }
+  }
+}
+
 function dragEndHandler() {
+  // Re-adds node so that it remains on top of wherever dropped
   if (DRAG_TYPE === 'node') {
-    document.querySelector('body').removeChild(DRAG_TARGET);
-    document.querySelector('body').appendChild(DRAG_TARGET);
+    document.body.removeChild(DRAG_TARGET);
+    document.body.appendChild(DRAG_TARGET);
   } else if (DRAG_TYPE === 'arrow') {
     TEMP_LINE.remove();
   }
@@ -132,10 +138,8 @@ function save() {
   document.querySelector('#downloadLink').href = 'data:application/javascript;charset=utf-8,' + encodeURIComponent(jsonldData);
 }
 
-async function loadData() {
-  let json = await fetch('../testData.jsonld');
-  json = await json.json();
-  console.log(JSON.stringify(json));
+function loadData(file) {
+  const data = JSON.parse(file);
   for (const node of document.querySelectorAll('.node')) {
     node.remove();
     delete NODE_LIST[node.id];
@@ -143,12 +147,12 @@ async function loadData() {
   for (const line of document.querySelectorAll('.leader-line')) {
     line.remove();
   }
-  for (const node of json) {
+  for (const node of data) {
     console.log(node);
     const newNode = createNode({ id: node.id, x: node.position.x, y: node.position.y, text: node.text });
-    document.querySelector('body').appendChild(newNode);
+    document.body.appendChild(newNode);
   }
-  for (const node of json) {
+  for (const node of data) {
     for (const line of node.links_to) {
       console.log(NODE_LIST, node.id, line, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
       connectLine(NODE_LIST, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
