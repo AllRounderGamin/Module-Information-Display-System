@@ -1,13 +1,15 @@
 /* eslint-disable no-undef */
-import { updateDragPos, objectSearch, lineSearch } from './scripts/util.js';
-import { createNewLine, doubleTippedArrow, unDoubleTipArrow, removeLine } from './scripts/lineFunctions.js';
+import { updateDragPos } from './scripts/util.js';
+import { connectLine } from './scripts/lineFunctions.js';
+import { createJsonldData } from './scripts/saving.js';
 
 function setUp() {
   document.addEventListener('dblclick', addNode);
   const basicNode = createNode({ id: 'Node0', x: window.innerWidth / 2 - 50, y: window.innerHeight / 2 - 50, text: 'Default Node' });
-  document.querySelector('body').appendChild(basicNode);
-  localStorage.setItem('next-node-id', '1');
+  document.body.appendChild(basicNode);
   document.addEventListener('dragover', dragOverHandler);
+  document.body.addEventListener('drop', fileDropHandler);
+  document.querySelector('#saveButton').addEventListener('click', save);
 }
 
 function addNode(e) {
@@ -33,12 +35,13 @@ function createNode(settings) {
   newNodeText.textContent = settings.text;
   newNodeDiv.querySelector('.drag-dot').setAttribute('parent-id', settings.id);
   eventSetup(newNodeDiv);
+  NODE_LIST[settings.id] = [];
   return newNode;
 }
 
 function eventSetup(node) {
   node.addEventListener('dragstart', dragStartHandler);
-  node.addEventListener('drop', dropHandler);
+  node.addEventListener('drop', nodeDropHandler);
   node.addEventListener('dragend', dragEndHandler);
 }
 
@@ -61,11 +64,14 @@ function dragStartHandler(e) {
 
 function dragOverHandler(e) {
   e.preventDefault();
+  if (!DRAG_TARGET) {
+    return;
+  }
   if (DRAG_TYPE === 'node') {
     updateDragPos(DRAG_TARGET, { x: e.pageX, y: e.pageY });
-    if (CONNECTED_NODES[DRAG_TARGET.id]) {
-      for (const lineObj of CONNECTED_NODES[DRAG_TARGET.id].lines) {
-        lineObj.line.position();
+    if (NODE_LIST[DRAG_TARGET.id]) {
+      for (const obj of NODE_LIST[DRAG_TARGET.id]) {
+        obj.line.position();
       }
     }
   } else if (DRAG_TYPE === 'arrow') {
@@ -73,54 +79,97 @@ function dragOverHandler(e) {
   }
 }
 
-function dropHandler(e) {
+function nodeDropHandler(e) {
   e.preventDefault();
   // cancels event if a node was dropped and not an arrow
   if (DRAG_TYPE === 'node') {
     return;
   }
   // updates drop target to be the node so that the arrow doesnt try to connect to a div inside the node
-  let dropTarget;
+  let endNode;
   if (e.target.getAttribute('parent-id') != null) {
-    dropTarget = document.querySelector(`#${e.target.getAttribute('parent-id')}`);
+    endNode = document.querySelector(`#${e.target.getAttribute('parent-id')}`);
   } else {
-    dropTarget = e.target;
+    endNode = e.target;
   }
-  DRAG_TARGET = document.querySelector(`#${DRAG_TARGET.getAttribute('parent-id')}`);
-  const lineName = DRAG_TARGET.id + dropTarget.id;
-  const inverseLine = dropTarget.id + DRAG_TARGET.id;
-  if (DRAG_TARGET.id !== dropTarget.id && DRAG_TARGET.id.length > 0 && dropTarget.id.length > 0) {
-    // checks to see if the line already exists or if the inverse line exists
-    if (lineSearch(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget) === false) {
-      if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
-        doubleTippedArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget);
-        return;
-      }
-      // if line and inverse line does not exist makes a new line object
-      createNewLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget);
-    } else {
-      // if inverse line key exists, modify existing line back to single tipped
-      if (objectSearch(inverseLine, CONNECTED_NODES[DRAG_TARGET.id].keys) !== false) {
-        unDoubleTipArrow(CONNECTED_NODES, DRAG_TARGET, lineName, inverseLine, dropTarget);
-        return;
-      } else {
-        removeLine(CONNECTED_NODES, DRAG_TARGET, lineName, dropTarget);
-      }
+  const startNode = document.querySelector(`#${DRAG_TARGET.getAttribute('parent-id')}`);
+  if (startNode.id !== endNode.id && startNode.id.length > 0 && endNode.id.length > 0) {
+    connectLine(NODE_LIST, startNode, endNode);
+  }
+  console.log(JSON.stringify(NODE_LIST));
+}
+
+function fileDropHandler(e) {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) {
+    const fileName = e.dataTransfer.files[0].name.split('.');
+    // eslint-disable-next-line no-constant-condition
+    if (fileName[fileName.length - 1] === 'json' || 'jsonld') {
+      const reader = new FileReader();
+      reader.readAsText(e.dataTransfer.files[0]);
+      reader.onload = () => { loadData(reader.result); };
     }
-    console.log(CONNECTED_NODES);
   }
 }
 
 function dragEndHandler() {
+  // Re-adds node so that it remains on top of wherever dropped
   if (DRAG_TYPE === 'node') {
-    document.querySelector('body').removeChild(DRAG_TARGET);
-    document.querySelector('body').appendChild(DRAG_TARGET);
+    document.body.removeChild(DRAG_TARGET);
+    document.body.appendChild(DRAG_TARGET);
   } else if (DRAG_TYPE === 'arrow') {
     TEMP_LINE.remove();
   }
+  DRAG_TARGET = null;
 }
 
-const CONNECTED_NODES = {};
+function save(dataReq = false) {
+  const nodeData = [];
+  const nodeList = document.querySelectorAll('.node');
+  for (const node of nodeList) {
+    nodeData.push({
+      id: node.id,
+      text: node.querySelector('.nodeName').textContent,
+      position: { x: node.dataset.x, y: node.dataset.y },
+    });
+  }
+  const jsonldData = JSON.stringify((createJsonldData(nodeData, NODE_LIST)), null, 4);
+  if (dataReq === true) {
+    return jsonldData;
+  }
+  document.querySelector('#downloadLink').href = 'data:application/javascript;charset=utf-8,' + encodeURIComponent(jsonldData);
+}
+
+function loadData(file) {
+  const data = JSON.parse(file);
+  const backup = save(true);
+  try {
+    for (const node of document.querySelectorAll('.node')) {
+      node.remove();
+      delete NODE_LIST[node.id];
+    }
+    for (const line of document.querySelectorAll('.leader-line')) {
+      line.remove();
+    }
+    for (const node of data) {
+      console.log(node);
+      const newNode = createNode({ id: node.id, x: node.position.x, y: node.position.y, text: node.text });
+      document.body.appendChild(newNode);
+    }
+    for (const node of data) {
+      for (const line of node.links_to) {
+        console.log(NODE_LIST, node.id, line, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+        connectLine(NODE_LIST, document.querySelector(`#${node.id}`), document.querySelector(`#${line}`));
+      }
+    }
+  } catch (error) {
+    console.error('File could not be loaded, reverting data');
+    console.error(error);
+    loadData(backup);
+  }
+}
+
+const NODE_LIST = {};
 let DRAG_TARGET;
 let DRAG_TYPE;
 let TEMP_LINE;

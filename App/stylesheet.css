@@ -45,3 +45,18 @@ body{
     z-index: 0;
     background-color: rgba(0,0,0,0);
 }
+
+#buttonArea{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    position: absolute;
+    top: 0;
+    right: 10px;
+}
+
+
+#saveButton{
+    background-color: darkgray;
+}
