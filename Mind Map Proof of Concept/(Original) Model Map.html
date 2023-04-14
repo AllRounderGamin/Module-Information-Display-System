@@ -1,0 +1,205 @@
+<!-- warning - old code - contains var -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<section id="sim">
+    <h1>Course Similarity Example</h1>
+    <p>This diagram illustrates the common units in all levels of two School of Computing courses.</p>
+    <ol>
+        <li>BSc (Hons) Web Technologies, and</li>
+        <li>BSc (Homs) Software Engineering</li>
+    </ol>
+    <p>If we had API access to UWS, this kind of thing could be auto-generated.</p>
+    <script type="text/javascript" src="https://www.jasondavies.com/d3.min.js"></script>
+    <style type="text/css">
+
+        path.link {
+            fill: none;
+            stroke: #666;
+            stroke-width: 1.5px;
+        }
+
+        path.link.hidden {
+            fill: none;
+            stroke: none;
+            stroke-width: 1.5px;
+        }
+
+
+        marker#level {
+            fill: green;
+        }
+
+        path.link.level {
+            stroke: green;
+        }
+
+        path.link.optional {
+            stroke-dasharray: 0,2 1;
+        }
+
+        circle {
+            fill: #ccc;
+            stroke: #333;
+            stroke-width: 1.5px;
+        }
+
+        text {
+            font: 10px sans-serif;
+            pointer-events: none;
+        }
+
+        text.shadow {
+            stroke: #fff;
+            stroke-width: 3px;
+            stroke-opacity: .8;
+        }
+
+    </style>
+    </head>
+    <body>
+    <script type="text/javascript">
+
+      var links = [
+        {source: "Web Technologies", target: "Common L1", type: "level"},
+        {source: "Web Technologies", target: "WT L2", type: "level"},
+        {source: "Web Technologies", target: "WT L3", type: "level"},
+
+        {source: "Common L1", target: "CARMA", type: "core"},
+        {source: "Common L1", target: "INDAD", type: "core"},
+        {source: "Common L1", target: "INTPROG", type: "core"},
+        {source: "Common L1", target: "NETFUN", type: "core"},
+        {source: "Common L1", target: "WEBF1", type: "core"},
+
+        {source: "WT L2", target: "ADPROC", type: "core"},
+        {source: "WT L2", target: "GUDE", type: "core"},
+        {source: "WT L2", target: "WEPM", type: "core"},
+        {source: "WT L2", target: "WEBF2", type: "core"},
+        {source: "WT L2", target: "WEBSCPR", type: "core"},
+        {source: "WT L2", target: "COSINE", type: "optional"},
+        {source: "WT L2", target: "DSALG", type: "optional"},
+        {source: "WT L2", target: "DBPRIN", type: "optional"},
+
+        {source: "WT L3", target: "ENTWA", type: "core"},
+        {source: "WT L3", target: "WEBRES", type: "core"},
+        {source: "WT L3", target: "PJE40", type: "core"},
+        {source: "WT L3", target: "ADCON12", type: "optional"},
+        {source: "WT L3", target: "ADNET", type: "optional"},
+        {source: "WT L3", target: "DWM", type: "optional"},
+        {source: "WT L3", target: "DISPARP", type: "optional"},
+        {source: "WT L3", target: "FLOTA", type: "optional"},
+        {source: "WT L3", target: "NETSOC", type: "optional"},
+
+
+        {source: "Software Engineering", target: "Common L1", type: "level"},
+        {source: "Software Engineering", target: "SE L2", type: "level"},
+        {source: "Software Engineering", target: "SE L3", type: "level"},
+
+
+        {source: "SE L2", target: "3DCGAA", type:"optional"},
+        {source: "SE L2", target: "ADPROC", type:"core"},
+        {source: "SE L2", target: "U22732", type:"core"},
+        {source: "SE L2", target: "COSINE", type:"optional"},
+        {source: "SE L2", target: "DSALG", type:"core"},
+        {source: "SE L2", target: "DBPRIN", type:"optional"},
+        {source: "SE L2", target: "MATHFUN", type:"core"},
+        {source: "SE L2", target: "GUDE", type:"core"},
+        {source: "SE L2", target: "INSE", type:"core"},
+        {source: "SE L2", target: "WEBSCPR", type:"optional"},
+
+        {source: "SE L3", target: "ASE", type:"core"},
+        {source: "SE L3", target: "DWM", type:"optional"},
+        {source: "SE L3", target: "DISPARP", type:"optional"},
+        {source: "SE L3", target: "PJE40", type:"core"},
+        {source: "SE L3", target: "FLOTA", type:"optional"},
+        {source: "SE L3", target: "NENGA", type:"optional"},
+        {source: "SE L3", target: "PARD", type:"optional"},
+        {source: "SE L3", target: "RASS", type:"core"},
+        {source: "SE L3", target: "WEBRES", type:"optional"},
+
+
+        {source: "Web Technologies", target: "Software Engineering", type: "hidden"},
+
+      ];
+
+      var nodes = {};
+
+      // Compute the distinct nodes from the links.
+      links.forEach(function(link) {
+        link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+      });
+
+
+      var w = 800,
+        h = 800;
+
+      var force = d3.layout.force()
+        .nodes(d3.values(nodes))
+        .links(links)
+        .size([w, h])
+        .linkDistance( function(d) { return (d.type=="hidden" ? 520 : 50); } )
+        .charge( function(d) { return (d.type=="hidden" ? -900 : -600); } )
+        .linkStrength( function(d) { return (d.type=="hidden" ? 0.9 : 0.5); } )
+        .on("tick", tick)
+        .theta(0.99)
+        .start();
+
+      var svg = d3.select("#sim").append("svg:svg")
+        .attr("width", w)
+        .attr("height", h);
+
+      var path = svg.append("svg:g").selectAll("path")
+        .data(force.links())
+        .enter().append("svg:path")
+        .attr("class", function(d) { return "link " + d.type; })
+        .attr("marker-end", function(d) { return "url(#" + d.type + ")"; });
+
+      var circle = svg.append("svg:g").selectAll("circle")
+        .data(force.nodes())
+        .enter().append("svg:circle")
+        .attr("r", 6)
+        .call(force.drag);
+
+      var text = svg.append("svg:g").selectAll("g")
+        .data(force.nodes())
+        .enter().append("svg:g");
+
+      // A copy of the text with a thick white stroke for legibility.
+      text.append("svg:text")
+        .attr("x", 8)
+        .attr("y", ".31em")
+        .attr("class", "shadow")
+        .text(function(d) { return d.name; });
+
+      text.append("svg:text")
+        .attr("x", 8)
+        .attr("y", ".31em")
+        .text(function(d) { return d.name; });
+
+      // Use elliptical arc path segments to doubly-encode directionality.
+      function tick() {
+        path.attr("d", function(d) {
+          return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
+        });
+
+        circle.attr("transform", function(d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        });
+
+        text.attr("transform", function(d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        });
+      }
+
+    </script>
+</section>
+</article>
+

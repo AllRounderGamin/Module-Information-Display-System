@@ -1,0 +1,179 @@
+<!-- warning - old code - Not fully modernised -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<section id="sim">
+    <h1>Module Mind Map</h1>
+    <p>This diagram illustrates one of many ways to illustrate data from the Module Timeline.</p>
+    <script type="text/javascript" src="https://www.jasondavies.com/d3.min.js"></script>
+    <style type="text/css">
+
+        path.link {
+            fill: none;
+            stroke: #666;
+            stroke-width: 1.5px;
+        }
+
+        path.link.hidden {
+            fill: none;
+            stroke: none;
+            stroke-width: 1.5px;
+        }
+
+
+        marker#level {
+            fill: green;
+        }
+
+        path.link.level {
+            stroke: green;
+        }
+
+        path.link.optional {
+            stroke-dasharray: 0,2 1;
+        }
+
+        circle {
+            fill: #ccc;
+            stroke: #333;
+            stroke-width: 1.5px;
+        }
+
+        text {
+            font: 10px sans-serif;
+            pointer-events: none;
+        }
+
+        text.shadow {
+            stroke: #fff;
+            stroke-width: 3px;
+            stroke-opacity: .8;
+        }
+
+    </style>
+    </head>
+    <body>
+    <script type="text/javascript">
+
+      const links = [];
+
+      const nodes = {};
+
+      async function test() {
+
+        async function getData() {
+          const json = await fetch('../TestData/testDataMap.jsonld');
+          return await json.json();
+        }
+
+        const data = await getData();
+
+        // As this is simply a proof of concept, instead of changing how data is saved on the webpage I created this dictionary
+        // of nodes to be able to easily get the node text so the nodes do not only show their ID
+        const nodeData = {};
+        for (const node of data) {
+            nodeData[node.id] = node;
+        }
+        for (const node of data) {
+          for (const attachment of node.links_to) {
+            // As Module Storyboard develops and node types are added, these would replace "core" allowing for a clearer map
+            links.push({source: node.text, target: nodeData[attachment].text, type: "core"})
+          }
+        }
+
+        // Compute the distinct nodes from the links.
+        links.forEach(function (link) {
+          link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
+          link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+        });
+
+
+        const w = 800,
+          h = 800;
+
+        const force = d3.layout.force()
+          .nodes(d3.values(nodes))
+          .links(links)
+          .size([w, h])
+          .linkDistance(function (d) {
+            return (d.type == "hidden" ? 520 : 50);
+          })
+          .charge(function (d) {
+            return (d.type == "hidden" ? -900 : -600);
+          })
+          .linkStrength(function (d) {
+            return (d.type == "hidden" ? 0.9 : 0.5);
+          })
+          .on("tick", tick)
+          .theta(0.99)
+          .start();
+
+        const svg = d3.select("#sim").append("svg:svg")
+          .attr("width", w)
+          .attr("height", h);
+
+        const path = svg.append("svg:g").selectAll("path")
+          .data(force.links())
+          .enter().append("svg:path")
+          .attr("class", function (d) {
+            return "link " + d.type;
+          })
+          .attr("marker-end", function (d) {
+            return "url(#" + d.type + ")";
+          });
+
+        const circle = svg.append("svg:g").selectAll("circle")
+          .data(force.nodes())
+          .enter().append("svg:circle")
+          .attr("r", 6)
+          .call(force.drag);
+
+        const text = svg.append("svg:g").selectAll("g")
+          .data(force.nodes())
+          .enter().append("svg:g");
+
+        // A copy of the text with a thick white stroke for legibility.
+        text.append("svg:text")
+          .attr("x", 8)
+          .attr("y", ".31em")
+          .attr("class", "shadow")
+          .text(function (d) {
+            return d.name;
+          });
+
+        text.append("svg:text")
+          .attr("x", 8)
+          .attr("y", ".31em")
+          .text(function (d) {
+            return d.name;
+          });
+
+        // Use elliptical arc path segments to doubly-encode directionality.
+        function tick() {
+          path.attr("d", function (d) {
+            return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
+          });
+
+          circle.attr("transform", function (d) {
+            return "translate(" + d.x + "," + d.y + ")";
+          });
+
+          text.attr("transform", function (d) {
+            return "translate(" + d.x + "," + d.y + ")";
+          });
+        }
+      }
+
+      (async () => await test())()
+
+    </script>
+</section>
+</article>
+

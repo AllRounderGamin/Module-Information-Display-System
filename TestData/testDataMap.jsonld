@@ -1,0 +1,218 @@
+[
+    {
+        "@context": "UOP:Node",
+        "id": "Node5",
+        "text": "DBLecture",
+        "position": {
+            "x": "874",
+            "y": "437"
+        },
+        "links_to": [
+            "Node2"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node0",
+        "text": "HTMLLecture",
+        "position": {
+            "x": "876",
+            "y": "621"
+        },
+        "links_to": [
+            "Node1"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node12",
+        "text": "Placeholder",
+        "position": {
+            "x": "1178",
+            "y": "693"
+        },
+        "links_to": []
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node9",
+        "text": "Lecture",
+        "position": {
+            "x": "1354",
+            "y": "248"
+        },
+        "links_to": [
+            "Node0",
+            "Node5",
+            "Node10",
+            "Node11",
+            "Node12"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node10",
+        "text": "Placeholder",
+        "position": {
+            "x": "914",
+            "y": "181"
+        },
+        "links_to": []
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node11",
+        "text": "Placeholder",
+        "position": {
+            "x": "1035",
+            "y": "691"
+        },
+        "links_to": []
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node8",
+        "text": "Topics",
+        "position": {
+            "x": "127",
+            "y": "114"
+        },
+        "links_to": [
+            "Node7",
+            "Node2",
+            "Node13"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node7",
+        "text": "Topic 2",
+        "position": {
+            "x": "121",
+            "y": "425"
+        },
+        "links_to": [
+            "Node0",
+            "Node1",
+            "Node6"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node3",
+        "text": "Placeholder",
+        "position": {
+            "x": "707",
+            "y": "377"
+        },
+        "links_to": [
+            "Node2"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node1",
+        "text": "HTMLWorksheet 1",
+        "position": {
+            "x": "410",
+            "y": "873"
+        },
+        "links_to": [
+            "Node6"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node2",
+        "text": "Topic 1",
+        "position": {
+            "x": "516",
+            "y": "86"
+        },
+        "links_to": [
+            "Node7"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node6",
+        "text": "HTML Worksheet 2",
+        "position": {
+            "x": "344",
+            "y": "1099"
+        },
+        "links_to": []
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node4",
+        "text": "Worksheets",
+        "position": {
+            "x": "839",
+            "y": "1047"
+        },
+        "links_to": [
+            "Node1",
+            "Node6",
+            "Node3"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node14",
+        "text": "2024-2025",
+        "position": {
+            "x": "231",
+            "y": "1496"
+        },
+        "links_to": [
+            "Node13",
+            "Node15"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node15",
+        "text": "2024-09-22",
+        "position": {
+            "x": "261",
+            "y": "1693"
+        },
+        "links_to": [
+            "Node16"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node16",
+        "text": "Start Date",
+        "position": {
+            "x": "521",
+            "y": "1699"
+        },
+        "links_to": []
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node13",
+        "text": "AcademicYear",
+        "position": {
+            "x": "506",
+            "y": "1491"
+        },
+        "links_to": [
+            "Node16",
+            "Node17"
+        ]
+    },
+    {
+        "@context": "UOP:Node",
+        "id": "Node17",
+        "text": "ConsolidationWeek",
+        "position": {
+            "x": "758",
+            "y": "1471"
+        },
+        "links_to": []
+    }
+]
